@@ -1,0 +1,7 @@
+﻿  Game4.cpp
+C:\Users\Jesse\Desktop\Tryin\Game4\Game4.cpp(68,33): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Jesse\Desktop\Tryin\Game4\Game4.cpp(71,29): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Jesse\Desktop\Tryin\Game4\Game4.cpp(89,37): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Jesse\Desktop\Tryin\Game4\Game4.cpp(92,33): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Jesse\Desktop\Tryin\Game4\Game4.cpp(130,15): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Game4.vcxproj -> C:\Users\Jesse\Desktop\Tryin\Game4\x64\Debug\Game4.exe
