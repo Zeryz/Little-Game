@@ -1,0 +1,139 @@
+#include <iostream>
+#include <cmath>
+#include <chrono>
+#include <thread>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+class Stats {
+public:
+    int level = 1;
+    double xp = 10;
+
+    int getStr() const { return 10 + (level - 1); }
+    int getAtk() const { return 10 + (level - 1); }
+    int getDef() const { return 10 + (level - 1); }
+    int getHp() const { return 10 + (level - 1); }
+};
+
+class BadGuy {
+public:
+    int level = 1;
+    int hp = 9;
+    int atk = 5;
+    int def = 9;
+    int str = 5;
+
+    int getBadGuyHp() const { return 8 + level; }
+    int getBadGuyAtk() const { return 1 + (level - 1); }
+    int getBadGuyDef() const { return 8 + level; }
+    int getBadGuyStr() const { return 5 + (level - 1); }
+    int getBadGuyXpv() const { return 10 + level * 5; }
+};
+
+void fight(Stats& stats, BadGuy& badGuy) {
+    badGuy.level = stats.level; // Sync enemy level with player
+    badGuy.hp = badGuy.getBadGuyHp();
+    int playerHp = stats.getHp();
+
+    cout << "A new enemy appears!" << endl;
+    while (badGuy.hp > 0 && playerHp > 0) {
+        // Player's turn
+        float playerAccuracy = stats.getAtk() / (float)(stats.getAtk() + badGuy.getBadGuyDef());
+        float playerCritChance = min(0.5f, stats.getAtk() * 0.01f);
+        bool playerHit = ((rand() % (stats.getAtk() + 1)) / (float)(stats.getAtk() + round(badGuy.getBadGuyDef() * 0.9))) < playerAccuracy;
+        if (playerHit) {
+            int baseDamage = stats.getStr() + (rand() % 3 - 1);
+            bool isCrit = (rand() / (float)RAND_MAX) < playerCritChance;
+            int damage = max(1, baseDamage - badGuy.getBadGuyDef());
+            if (isCrit) {
+                damage = damage * 2.5;
+                cout << "Critical hit! ";
+            }
+            badGuy.hp -= damage;
+            cout << "You deal " << damage << " damage to the enemy!" << endl;
+        } else {
+            cout << "You miss the enemy!" << endl;
+        }
+
+        // Enemy's turn (if still alive)
+        if (badGuy.hp > 0) {
+            float enemyAccuracy = badGuy.getBadGuyAtk() / (float)(badGuy.getBadGuyAtk() + stats.getDef());
+            float enemyCritChance = min(0.5f, badGuy.getBadGuyAtk() * 0.01f);
+            bool enemyHit = ((rand() % (badGuy.getBadGuyAtk() + 1)) / (float)(badGuy.getBadGuyAtk() + round(stats.getDef() * 0.9))) < enemyAccuracy;
+            if (enemyHit) {
+                int baseDamage = badGuy.getBadGuyStr() + (rand() % 3 - 1);
+                bool isCrit = (rand() / (float)RAND_MAX) < enemyCritChance;
+                int damage = max(1, baseDamage - stats.getDef());
+                if (isCrit) {
+                    damage = damage * 2.5;
+                    cout << "Enemy lands a critical hit! ";
+                }
+                playerHp -= damage;
+                cout << "Enemy deals " << damage << " damage to you!" << endl;
+            } else {
+                cout << "Enemy misses you!" << endl;
+            }
+        }
+
+        cout << "Enemy HP: " << badGuy.hp << " | Your HP: " << playerHp << endl;
+
+        if (badGuy.hp <= 0) {
+            cout << "You win!" << endl;
+            cout << "You gained " << round(badGuy.getBadGuyXpv()) << " xp" << endl;
+            stats.xp += badGuy.getBadGuyXpv();
+            cout << "You now have " << round(stats.xp) << " xp" << endl;
+
+            if (stats.xp >= stats.level * 100) {
+                stats.level += 1;
+                playerHp = stats.getHp(); // Reset HP
+                cout << "You leveled up! You are now level " << stats.level << endl;
+            } else {
+                playerHp = stats.getHp(); // Reset HP
+            }
+            break;
+        }
+        if (playerHp <= 0) {
+            cout << "You lose!" << endl;
+            playerHp = stats.getHp(); // Reset HP, no XP loss
+            break;
+        }
+
+        this_thread::sleep_for(chrono::milliseconds(550));
+    }
+}
+
+int main() {
+    srand(time(0)); // Initialize random seed
+    Stats stats;
+    BadGuy badGuy;
+
+    while (true) {
+        cout << "Str: " << stats.getStr() << " | Enemy Str: " << badGuy.getBadGuyStr() << endl;
+        cout << "Atk: " << stats.getAtk() << " | Enemy Atk: " << badGuy.getBadGuyAtk() << endl;
+        cout << "Def: " << stats.getDef() << " | Enemy Def: " << badGuy.getBadGuyDef() << endl;
+        cout << "Level: " << stats.level << endl;
+        cout << "XP: " << round(stats.xp) << endl;
+
+        fight(stats, badGuy);
+
+        // Ask if the player wants to continue
+        // char choice;
+        // do {
+        //     cout << "Fight again? (y/n): ";
+        //     cin >> choice;
+        //     choice = tolower(choice);
+        //     if (choice != 'y' && choice != 'n') {
+        //         cout << "Please enter 'y' or 'n'." << endl;
+        //     }
+        // } while (choice != 'y' && choice != 'n');
+        // if (choice != 'y') {
+        //     break;
+        // }
+
+        this_thread::sleep_for(chrono::milliseconds(550));
+    }
+
+    return 0;
+}
