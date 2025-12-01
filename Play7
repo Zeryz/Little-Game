@@ -1,139 +1,167 @@
-#include <iostream>
-#include <cmath>
-#include <chrono>
-#include <thread>
-#include <cstdlib>
-#include <ctime>
-using namespace std;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little Game</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css?v=200">
+    <style>
+        .game-container {
+            background:#111; padding:2rem; border-radius:20px; border:4px solid #00f5ff;
+            box-shadow:0 0 50px #00f5ff60; max-width:800px; margin:3rem auto;
+            font-family:'Courier New',monospace; color:#0f0;
+        }
+        #output {
+            background:#000; padding:1.5rem; border-radius:12px; height:60vh;
+            overflow-y:auto; white-space:pre-wrap; border:2px solid #0f0;
+            margin-bottom:1rem; font-size:1.1rem;
+        }
+        button {
+            padding:1rem; font-size:1.3rem; width:100%; border-radius:12px;
+            background:#00f5ff; color:#000; border:none; font-weight:bold;
+            cursor:pointer;
+        }
+        button:hover { background:#80f8ff; }
+    </style>
+</head>
+<body>
+    <header><nav><a href="index.html" style="color:#00f5ff;">← Home</a></nav></header>
+    <main>
+        <section class="hero">
+            <h1>Little Game</h1>
+            <p>Your newest masterpiece</p>
+            <img src="images/photo.jpg" alt="Jesse" class="profile-photo">
+        </section>
 
-class Stats {
-public:
-    int level = 1;
-    double xp = 10;
+        <div class="game-container">
+            <div id="output">Starting Little Game...\n\n</div>
+            <button onclick="fightAgain()">Fight Again</button>
+        </div>
+    </main>
+    <footer>
+        <p>© 2025 Jesse · -What a headache this crap is-</p>
+    </footer>
 
-    int getStr() const { return 10 + (level - 1); }
-    int getAtk() const { return 10 + (level - 1); }
-    int getDef() const { return 10 + (level - 1); }
-    int getHp() const { return 10 + (level - 1); }
-};
-
-class BadGuy {
-public:
-    int level = 1;
-    int hp = 9;
-    int atk = 5;
-    int def = 9;
-    int str = 5;
-
-    int getBadGuyHp() const { return 8 + level; }
-    int getBadGuyAtk() const { return 1 + (level - 1); }
-    int getBadGuyDef() const { return 8 + level; }
-    int getBadGuyStr() const { return 5 + (level - 1); }
-    int getBadGuyXpv() const { return 10 + level * 5; }
-};
-
-void fight(Stats& stats, BadGuy& badGuy) {
-    badGuy.level = stats.level; // Sync enemy level with player
-    badGuy.hp = badGuy.getBadGuyHp();
-    int playerHp = stats.getHp();
-
-    cout << "A new enemy appears!" << endl;
-    while (badGuy.hp > 0 && playerHp > 0) {
-        // Player's turn
-        float playerAccuracy = stats.getAtk() / (float)(stats.getAtk() + badGuy.getBadGuyDef());
-        float playerCritChance = min(0.5f, stats.getAtk() * 0.01f);
-        bool playerHit = ((rand() % (stats.getAtk() + 1)) / (float)(stats.getAtk() + round(badGuy.getBadGuyDef() * 0.9))) < playerAccuracy;
-        if (playerHit) {
-            int baseDamage = stats.getStr() + (rand() % 3 - 1);
-            bool isCrit = (rand() / (float)RAND_MAX) < playerCritChance;
-            int damage = max(1, baseDamage - badGuy.getBadGuyDef());
-            if (isCrit) {
-                damage = damage * 2.5;
-                cout << "Critical hit! ";
+    <script>
+        class Stats {
+            constructor() {
+                this.level = 1;
+                this.xp = 10;
             }
-            badGuy.hp -= damage;
-            cout << "You deal " << damage << " damage to the enemy!" << endl;
-        } else {
-            cout << "You miss the enemy!" << endl;
+            getStr()   { return 10 + (this.level - 1); }
+            getAtk()   { return 10 + (this.level - 1); }
+            getDef()   { return 10 + (this.level - 1); }
+            getHp()    { return 10 + (this.level - 1); }
         }
 
-        // Enemy's turn (if still alive)
-        if (badGuy.hp > 0) {
-            float enemyAccuracy = badGuy.getBadGuyAtk() / (float)(badGuy.getBadGuyAtk() + stats.getDef());
-            float enemyCritChance = min(0.5f, badGuy.getBadGuyAtk() * 0.01f);
-            bool enemyHit = ((rand() % (badGuy.getBadGuyAtk() + 1)) / (float)(badGuy.getBadGuyAtk() + round(stats.getDef() * 0.9))) < enemyAccuracy;
-            if (enemyHit) {
-                int baseDamage = badGuy.getBadGuyStr() + (rand() % 3 - 1);
-                bool isCrit = (rand() / (float)RAND_MAX) < enemyCritChance;
-                int damage = max(1, baseDamage - stats.getDef());
-                if (isCrit) {
-                    damage = damage * 2.5;
-                    cout << "Enemy lands a critical hit! ";
+        class BadGuy {
+            constructor() {
+                this.level = 1;
+                this.hp = 9;
+                this.atk = 5;
+                this.def = 9;
+                this.str = 5;
+            }
+            getBadGuyHp()  { return 8 + this.level; }
+            getBadGuyAtk() { return 1 + (this.level - 1); }
+            getBadGuyDef() { return 8 + this.level; }
+            getBadGuyStr() { return 5 + (this.level - 1); }
+            getBadGuyXpv() { return 10 + this.level * 5; }
+        }
+
+        const output = document.getElementById("output");
+        let player = new Stats();
+        let enemy = new BadGuy();
+
+        function println(text = "") {
+            output.textContent += text + "\n";
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function fight() {
+            enemy.level = player.level;
+            enemy.hp = enemy.getBadGuyHp();
+            let playerHp = player.getHp();
+
+            println("A new enemy appears!");
+
+            while (enemy.hp > 0 && playerHp > 0) {
+                // Player turn
+                let playerAccuracy = player.getAtk() / (player.getAtk() + enemy.getBadGuyDef());
+                let playerCritChance = Math.min(0.5, player.getAtk() * 0.01);
+                let playerHit = Math.random() < playerAccuracy;
+
+                if (playerHit) {
+                    let baseDamage = player.getStr() + (Math.floor(Math.random() * 3) - 1);
+                    let isCrit = Math.random() < playerCritChance;
+                    let damage = Math.max(1, baseDamage - enemy.getBadGuyDef());
+                    if (isCrit) {
+                        damage = Math.floor(damage * 2.5);
+                        print("Critical hit! ");
+                    }
+                    enemy.hp -= damage;
+                    println(`You deal ${damage} damage to the enemy!`);
+                } else {
+                    println("You miss the enemy!");
                 }
-                playerHp -= damage;
-                cout << "Enemy deals " << damage << " damage to you!" << endl;
-            } else {
-                cout << "Enemy misses you!" << endl;
+
+                // Enemy turn (if alive)
+                if (enemy.hp > 0) {
+                    let enemyAccuracy = enemy.getBadGuyAtk() / (enemy.getBadGuyAtk() + player.getDef());
+                    let enemyCritChance = Math.min(0.5, enemy.getBadGuyAtk() * 0.01);
+                    let enemyHit = Math.random() < enemyAccuracy;
+
+                    if (enemyHit) {
+                        let baseDamage = enemy.getBadGuyStr() + (Math.floor(Math.random() * 3) - 1);
+                        let isCrit = Math.random() < enemyCritChance;
+                        let damage = Math.max(1, baseDamage - player.getDef());
+                        if (isCrit) {
+                            damage = Math.floor(damage * 2.5);
+                            print("Enemy lands a critical hit! ");
+                        }
+                        playerHp -= damage;
+                        println(`Enemy deals ${damage} damage to you!`);
+                    } else {
+                        println("Enemy misses you!");
+                    }
+                }
+
+                println(`Enemy HP: ${enemy.hp} | Your HP: ${playerHp}`);
+                if (enemy.hp <= 0) {
+                    println("You win!");
+                    println(`You gained ${Math.round(enemy.getBadGuyXpv())} xp`);
+                    player.xp += enemy.getBadGuyXpv();
+                    println(`You now have ${Math.round(player.xp)} xp`);
+                    if (player.xp >= player.level * 100) {
+                        player.level++;
+                        playerHp = player.getHp();
+                        println(`You leveled up! You are now level ${player.level}`);
+                    } else {
+                        playerHp = player.getHp();
+                    }
+                }
+                if (playerHp <= 0) {
+                    println("You lose!");
+                    playerHp = player.getHp();
+                }
             }
+            println("\nStr: " + player.getStr() + " | Enemy Str: " + enemy.getBadGuyStr());
+            println("Atk: " + player.getAtk() + " | Enemy Atk: " + enemy.getBadGuyAtk());
+            println("Def: " + player.getDef() + " | Enemy Def: " + enemy.getBadGuyDef());
+            println("Level: " + player.level);
+            println("XP: " + Math.round(player.xp));
+            println("───────────────────────────────────────");
         }
 
-        cout << "Enemy HP: " << badGuy.hp << " | Your HP: " << playerHp << endl;
-
-        if (badGuy.hp <= 0) {
-            cout << "You win!" << endl;
-            cout << "You gained " << round(badGuy.getBadGuyXpv()) << " xp" << endl;
-            stats.xp += badGuy.getBadGuyXpv();
-            cout << "You now have " << round(stats.xp) << " xp" << endl;
-
-            if (stats.xp >= stats.level * 100) {
-                stats.level += 1;
-                playerHp = stats.getHp(); // Reset HP
-                cout << "You leveled up! You are now level " << stats.level << endl;
-            } else {
-                playerHp = stats.getHp(); // Reset HP
-            }
-            break;
-        }
-        if (playerHp <= 0) {
-            cout << "You lose!" << endl;
-            playerHp = stats.getHp(); // Reset HP, no XP loss
-            break;
+        function fightAgain() {
+            output.textContent = ""; // clear screen
+            println("Starting Little Game...\n");
+            fight();
         }
 
-        this_thread::sleep_for(chrono::milliseconds(550));
-    }
-}
-
-int main() {
-    srand(time(0)); // Initialize random seed
-    Stats stats;
-    BadGuy badGuy;
-
-    while (true) {
-        cout << "Str: " << stats.getStr() << " | Enemy Str: " << badGuy.getBadGuyStr() << endl;
-        cout << "Atk: " << stats.getAtk() << " | Enemy Atk: " << badGuy.getBadGuyAtk() << endl;
-        cout << "Def: " << stats.getDef() << " | Enemy Def: " << badGuy.getBadGuyDef() << endl;
-        cout << "Level: " << stats.level << endl;
-        cout << "XP: " << round(stats.xp) << endl;
-
-        fight(stats, badGuy);
-
-        // Ask if the player wants to continue
-        // char choice;
-        // do {
-        //     cout << "Fight again? (y/n): ";
-        //     cin >> choice;
-        //     choice = tolower(choice);
-        //     if (choice != 'y' && choice != 'n') {
-        //         cout << "Please enter 'y' or 'n'." << endl;
-        //     }
-        // } while (choice != 'y' && choice != 'n');
-        // if (choice != 'y') {
-        //     break;
-        // }
-
-        this_thread::sleep_for(chrono::milliseconds(550));
-    }
-
-    return 0;
-}
+        // Auto-start on load
+        fightAgain();
+    </script>
+</body>
+</html>
